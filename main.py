@@ -21,6 +21,8 @@ if "show_shop" not in st.session_state:
     st.session_state.show_shop = False
 if "show_casino" not in st.session_state:
     st.session_state.show_casino = False
+if "current_theme" not in st.session_state:
+    st.session_state.current_theme = "다크 모드" # 기본 테마
 
 # 🎰 도박 횟수 및 쿨타임 초기화
 LIMIT_CONFIG = {
@@ -37,6 +39,44 @@ if "gamble_limits" not in st.session_state:
         1000: {"remaining": 5, "reset_at": reset_time},
         10000: {"remaining": 50, "reset_at": reset_time}
     }
+
+# 🎨 테마 스타일 정의
+THEME_STYLES = {
+    "다크 모드": """
+        <style>
+        .stApp { background-color: #0E1117; color: #FAFAFA; }
+        div[data-testid="stMetricValue"] { color: #FFFFFF !important; }
+        </style>
+    """,
+    "네온 시티": """
+        <style>
+        .stApp { background-color: #0d0221; color: #00f6ff; }
+        div[data-testid="stMetricValue"] { color: #ff007f !important; text-shadow: 0 0 10px #ff007f; }
+        .stButton>button { background-color: #241442 !important; color: #00f6ff !important; border: 1px solid #00f6ff !important; }
+        </style>
+    """,
+    "골드 라운지": """
+        <style>
+        .stApp { background-color: #1a150e; color: #f3e5ab; }
+        div[data-testid="stMetricValue"] { color: #ffd700 !important; text-shadow: 0 0 8px #ffd700; }
+        .stButton>button { background-color: #33291a !important; color: #ffd700 !important; border: 1px solid #ffd700 !important; }
+        </style>
+    """,
+    "마카롱 파스텔": """
+        <style>
+        .stApp { background-color: #fcf4dd; color: #4a4e69; }
+        div[data-testid="stMetricValue"] { color: #ff9a9e !important; }
+        .stButton>button { background-color: #fde2e4 !important; color: #4a4e69 !important; border: 1px solid #cddafd !important; }
+        </style>
+    """,
+    "레트로 픽셀": """
+        <style>
+        .stApp { background-color: #001100; color: #00ff00; font-family: monospace; }
+        div[data-testid="stMetricValue"] { color: #00ff00 !important; text-shadow: 0 0 5px #00ff00; }
+        .stButton>button { background-color: #002200 !important; color: #00ff00 !important; border: 1px solid #00ff00 !important; }
+        </style>
+    """
+}
 
 # 2. 쿨타임 및 리셋 체크
 def check_and_reset_limits():
@@ -71,13 +111,10 @@ def buy_upgrade():
         st.session_state.per_click += 1
         st.session_state.upgrade_count += 1
         
-        # [수정된 부분] 가격 인상 배율 및 확률 설정
-        # 25% 증가(1.25배): 50%, 50% 증가(1.5배): 45%, 100% 증가(2.0배): 5%
         multipliers = [1.25, 1.5, 2.0]
         weights = [50, 45, 5]
         chosen_multiplier = random.choices(multipliers, weights=weights, k=1)[0]
         
-        # 가격 계산 및 소수점 반올림 처리
         new_cost = round(st.session_state.cost * chosen_multiplier)
         st.session_state.cost = int(new_cost)
         
@@ -99,6 +136,17 @@ def buy_auto_clicker():
         st.toast(f"🤖 오토 클릭커 구매 성공! (다음 가격 {chosen_multiplier}배 상승: {st.session_state.auto_cost:,} 카운트)")
     else:
         st.toast("❌ 카운트가 부족합니다!")
+
+# 🎨 테마 뽑기 함수 (가격 500, 각 테마 20% 동일 확률)
+def draw_theme():
+    if st.session_state.count >= 500:
+        st.session_state.count -= 500
+        themes = ["다크 모드", "네온 시티", "골드 라운지", "마카롱 파스텔", "레트로 픽셀"]
+        chosen_theme = random.choice(themes)
+        st.session_state.current_theme = chosen_theme
+        st.toast(f"🎨 테마 뽑기 성공! [{chosen_theme}] 테마가 적용되었습니다!", icon="✨")
+    else:
+        st.toast("❌ 카운트가 부족합니다! (필요: 500 카운트)")
 
 def gamble(amount):
     check_and_reset_limits()
@@ -186,7 +234,9 @@ st.components.v1.html(
 # 숨겨진 QWER 치트 버튼
 st.button("Cheat", key="cheat_btn", on_click=lambda: increment(5000), type="secondary", use_container_width=False)
 
-# 5. UI 구성
+# 5. UI 구성 및 테마 CSS 적용
+st.markdown(THEME_STYLES[st.session_state.current_theme], unsafe_allow_html=True)
+
 st.title("🔢 스페이스 카운터")
 
 # 치트 버튼 숨기기용 CSS
@@ -205,10 +255,8 @@ def render_auto_counter():
     st.metric("현재 카운트 (실시간)", f"{st.session_state.count:,}")
 
 if st.session_state.auto_clickers > 0:
-    # 오토클릭커를 1개 이상 보유 시 실시간 타이머 프래그먼트 실행
     render_auto_counter()
 else:
-    # 보유 전에는 일반 메트릭 표기
     st.metric("현재 카운트", f"{st.session_state.count:,}")
 
 st.button(
@@ -270,6 +318,22 @@ if st.session_state.show_shop:
             )
         else:
             st.warning(f"🔒 해금 조건: 클릭 강화를 5번 구매하세요! (현재 {st.session_state.upgrade_count}/5회)")
+
+        st.write("---")
+
+        # 🎨 3. 테마 랜덤 뽑기
+        st.markdown(f"**3. 🎨 테마 뽑기** (현재 적용: **{st.session_state.current_theme}**)")
+        st.write("- 필요 카운트: **500**")
+        st.caption("🎲 5가지 테마(다크 모드, 네온 시티, 골드 라운지, 마카롱 파스텔, 레트로 픽셀) 중 하나가 20% 확률로 무작위 적용됩니다.")
+        
+        can_draw_theme = st.session_state.count >= 500
+        st.button(
+            "🎨 테마 랜덤 뽑기 (500 카운트)", 
+            key="draw_theme_btn",
+            on_click=draw_theme, 
+            disabled=not can_draw_theme,
+            use_container_width=True
+        )
 
 # 8. 도박장 UI
 if st.session_state.show_casino:
