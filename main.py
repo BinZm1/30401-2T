@@ -48,6 +48,13 @@ THEME_STYLES = {
         div[data-testid="stMetricValue"] { color: #FFFFFF !important; }
         </style>
     """,
+    "화이트 모드": """
+        <style>
+        .stApp { background-color: #FFFFFF; color: #111111; }
+        div[data-testid="stMetricValue"] { color: #111111 !important; }
+        .stButton>button { background-color: #F0F2F6 !important; color: #111111 !important; border: 1px solid #D1D5DB !important; }
+        </style>
+    """,
     "네온 시티": """
         <style>
         .stApp { background-color: #0d0221; color: #00f6ff; }
@@ -60,13 +67,6 @@ THEME_STYLES = {
         .stApp { background-color: #1a150e; color: #f3e5ab; }
         div[data-testid="stMetricValue"] { color: #ffd700 !important; text-shadow: 0 0 8px #ffd700; }
         .stButton>button { background-color: #33291a !important; color: #ffd700 !important; border: 1px solid #ffd700 !important; }
-        </style>
-    """,
-    "마카롱 파스텔": """
-        <style>
-        .stApp { background-color: #fcf4dd; color: #4a4e69; }
-        div[data-testid="stMetricValue"] { color: #ff9a9e !important; }
-        .stButton>button { background-color: #fde2e4 !important; color: #4a4e69 !important; border: 1px solid #cddafd !important; }
         </style>
     """,
     "레트로 픽셀": """
@@ -137,14 +137,19 @@ def buy_auto_clicker():
     else:
         st.toast("❌ 카운트가 부족합니다!")
 
-# 🎨 테마 뽑기 함수 (가격 500, 각 테마 20% 동일 확률)
+# 🎨 테마 뽑기 함수 (현재 테마 제외 나머지 4개 중 25% 확률 무작위)
 def draw_theme():
     if st.session_state.count >= 500:
         st.session_state.count -= 500
-        themes = ["다크 모드", "네온 시티", "골드 라운지", "마카롱 파스텔", "레트로 픽셀"]
-        chosen_theme = random.choice(themes)
+        all_themes = ["다크 모드", "화이트 모드", "네온 시티", "골드 라운지", "레트로 픽셀"]
+        
+        # 현재 적용 중인 테마 제외
+        available_themes = [t for t in all_themes if t != st.session_state.current_theme]
+        
+        # 남은 4개 중에서 각 25% 확률로 1개 선택
+        chosen_theme = random.choice(available_themes)
         st.session_state.current_theme = chosen_theme
-        st.toast(f"🎨 테마 뽑기 성공! [{chosen_theme}] 테마가 적용되었습니다!", icon="✨")
+        st.toast(f"🎨 테마 뽑기 성공! [{chosen_theme}] (으)로 변경되었습니다!", icon="✨")
     else:
         st.toast("❌ 카운트가 부족합니다! (필요: 500 카운트)")
 
@@ -324,7 +329,7 @@ if st.session_state.show_shop:
         # 🎨 3. 테마 랜덤 뽑기
         st.markdown(f"**3. 🎨 테마 뽑기** (현재 적용: **{st.session_state.current_theme}**)")
         st.write("- 필요 카운트: **500**")
-        st.caption("🎲 5가지 테마(다크 모드, 네온 시티, 골드 라운지, 마카롱 파스텔, 레트로 픽셀) 중 하나가 20% 확률로 무작위 적용됩니다.")
+        st.caption("🎲 현재 테마를 제외한 나머지 4개 테마 중 하나가 25% 확률로 무작위 적용됩니다.")
         
         can_draw_theme = st.session_state.count >= 500
         st.button(
