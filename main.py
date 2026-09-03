@@ -10,13 +10,13 @@ if "count" not in st.session_state:
 if "per_click" not in st.session_state:
     st.session_state.per_click = 1
 if "upgrade_count" not in st.session_state:
-    st.session_state.upgrade_count = 0  # 강화 구매 횟수
+    st.session_state.upgrade_count = 0
 if "cost" not in st.session_state:
-    st.session_state.cost = 50          # 클릭 강화 비용
+    st.session_state.cost = 50
 if "auto_clickers" not in st.session_state:
-    st.session_state.auto_clickers = 0  # 보유한 오토 클릭커 개수
+    st.session_state.auto_clickers = 0
 if "auto_cost" not in st.session_state:
-    st.session_state.auto_cost = 5000   # 오토 클릭커 초기 비용
+    st.session_state.auto_cost = 5000
 if "show_shop" not in st.session_state:
     st.session_state.show_shop = False
 if "show_casino" not in st.session_state:
@@ -26,7 +26,7 @@ if "show_theme_tab" not in st.session_state:
 if "current_theme" not in st.session_state:
     st.session_state.current_theme = "다크 모드"
 if "unlocked_themes" not in st.session_state:
-    st.session_state.unlocked_themes = ["다크 모드"] # 초기 보유 테마
+    st.session_state.unlocked_themes = ["다크 모드"]
 
 # 🎰 도박 횟수 및 쿨타임 초기화
 LIMIT_CONFIG = {
@@ -44,7 +44,7 @@ if "gamble_limits" not in st.session_state:
         10000: {"remaining": 50, "reset_at": reset_time}
     }
 
-# 🎨 테마 스타일 정의 (모든 요소의 글자 색상 보정 및 테두리 효과 대폭 강화)
+# 🎨 테마 스타일 정의
 THEME_STYLES = {
     "다크 모드": """
         <style>
@@ -57,20 +57,22 @@ THEME_STYLES = {
     """,
     "화이트 모드": """
         <style>
-        .stApp { background-color: #FFFFFF; color: #111111 !important; }
-        .stApp p, .stApp span, .stApp label, .stApp h1, .stApp h2, .stApp h3, .stApp div {
-            color: #111111 !important;
-            text-shadow: -1px -1px 0 #FFFFFF, 1px -1px 0 #FFFFFF, -1px 1px 0 #FFFFFF, 1px 1px 0 #FFFFFF, 0 0 3px rgba(0,0,0,0.3) !important;
-            -webkit-text-stroke: 0.3px #000000;
+        .stApp { 
+            background-color: #FFFFFF !important; 
         }
-        div[data-testid="stMetricValue"] { color: #111111 !important; }
+        .stApp, .stApp p, .stApp span, .stApp label, .stApp h1, .stApp h2, .stApp h3, 
+        .stApp div, div[data-testid="stMetricValue"], .stButton>button, .stButton>button p {
+            color: #FFFFFF !important;
+            -webkit-text-stroke: 1.2px #000000 !important;
+            text-shadow: 
+                -1px -1px 0 #000,
+                 1px -1px 0 #000,
+                -1px  1px 0 #000,
+                 1px  1px 0 #000 !important;
+        }
         .stButton>button { 
-            background-color: #F0F2F6 !important; 
-            color: #111111 !important; 
-            border: 2px solid #111111 !important; 
-        }
-        .stButton>button p {
-            color: #111111 !important;
+            background-color: #FFFFFF !important; 
+            border: 2px solid #000000 !important; 
         }
         </style>
     """,
@@ -182,7 +184,6 @@ def buy_auto_clicker():
     else:
         st.toast("❌ 카운트가 부족합니다!")
 
-# 🎨 테마 뽑기 함수 (현재 테마 제외 나머지 4개 중 25% 확률 무작위)
 def draw_theme():
     all_themes = ["다크 모드", "화이트 모드", "네온 시티", "골드 라운지", "레트로 픽셀"]
     
@@ -231,7 +232,7 @@ def gamble(amount):
     else:
         st.toast("❌ 배팅할 카운트가 부족합니다!")
 
-# 4. 키보드 이벤트 처리 (Space, E, QWER 멀티키 치트 감지)
+# 4. 키보드 이벤트 처리
 st.components.v1.html(
     """
     <script>
@@ -287,7 +288,6 @@ st.components.v1.html(
     height=0,
 )
 
-# 숨겨진 QWER 치트 버튼
 st.button("Cheat", key="cheat_btn", on_click=lambda: increment(5000), type="secondary", use_container_width=False)
 
 # 5. UI 구성 및 테마 CSS 적용
@@ -295,7 +295,6 @@ st.markdown(THEME_STYLES[st.session_state.current_theme], unsafe_allow_html=True
 
 st.title("🔢 스페이스 카운터")
 
-# 치트 버튼 숨기기용 CSS
 st.markdown("""
     <style>
     button[key="cheat_btn"] {
@@ -384,7 +383,6 @@ if st.session_state.show_shop:
 
         st.write("---")
 
-        # 🎨 3. 테마 랜덤 뽑기
         st.markdown(f"**3. 🎨 테마 뽑기** (현재 적용: **{st.session_state.current_theme}**)")
         st.write("- 필요 카운트: **500**")
         st.caption("🎲 현재 테마를 제외한 나머지 4개 테마 중 하나가 25% 확률로 무작위 적용되며 보관함에 저장됩니다.")
