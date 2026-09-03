@@ -18,7 +18,7 @@ if "auto_clickers" not in st.session_state:
 if "auto_cost" not in st.session_state:
     st.session_state.auto_cost = 5000
 
-# 🥤 몬스터 음료 및 인벤토리 관련 세션 상태
+# 🥤 몬스터 음료 세션
 if "monster_inventory" not in st.session_state:
     st.session_state.monster_inventory = 0
 if "monster_bought_count" not in st.session_state:
@@ -28,9 +28,19 @@ if "monster_last_reset" not in st.session_state:
 if "buff_end_time" not in st.session_state:
     st.session_state.buff_end_time = None
 
+# 🐱 펫(고양이) & 선물 상자 세션
+if "has_cat" not in st.session_state:
+    st.session_state.has_cat = False
+if "box_inventory" not in st.session_state:
+    st.session_state.box_inventory = 0
+if "last_cat_gift_time" not in st.session_state:
+    st.session_state.last_cat_gift_time = datetime.now()
+
 # UI 탭 상태
 if "show_shop" not in st.session_state:
     st.session_state.show_shop = False
+if "show_pet_shop" not in st.session_state:
+    st.session_state.show_pet_shop = False
 if "show_inventory" not in st.session_state:
     st.session_state.show_inventory = False
 if "show_casino" not in st.session_state:
@@ -58,11 +68,18 @@ if "gamble_limits" not in st.session_state:
         10000: {"remaining": 50, "reset_at": reset_time}
     }
 
-# ⏳ 몬스터 음료 10분 주기 리셋 체크
+# ⏳ 몬스터 음료 10분 주기 리셋
 now_time = datetime.now()
 if now_time - st.session_state.monster_last_reset >= timedelta(minutes=10):
     st.session_state.monster_bought_count = 0
     st.session_state.monster_last_reset = now_time
+
+# 🐱 고양이 1분 주기 상자 획득 체크
+if st.session_state.has_cat:
+    if now_time - st.session_state.last_cat_gift_time >= timedelta(minutes=1):
+        st.session_state.box_inventory += 1
+        st.session_state.last_cat_gift_time = now_time
+        st.toast("🐱 고양이가 밖으로 뛰어가 상자를 하나 물어왔습니다! (인벤토리 확인)")
 
 # 🎨 테마 스타일 정의
 THEME_STYLES = {
@@ -157,9 +174,30 @@ def increment(amount=None):
 
 def toggle_tab(tab_name):
     st.session_state.show_shop = (tab_name == "shop") and not st.session_state.show_shop
+    st.session_state.show_pet_shop = (tab_name == "pet_shop") and not st.session_state.show_pet_shop
     st.session_state.show_inventory = (tab_name == "inventory") and not st.session_state.show_inventory
     st.session_state.show_casino = (tab_name == "casino") and not st.session_state.show_casino
     st.session_state.show_theme_tab = (tab_name == "theme") and not st.session_state.show_theme_tab
+
+def buy_cat():
+    if st.session_state.has_cat:
+        st.toast("🐱 이미 고양이를 분양받으셨습니다!")
+    elif st.session_state.count >= 5000:
+        st.session_state.count -= 5000
+        st.session_state.has_cat = True
+        st.session_state.last_cat_gift_time = datetime.now()
+        st.toast("🎉 귀여운 고양이를 입양했습니다! 화면에서 자유롭게 움직입니다.")
+    else:
+        st.toast("❌ 카운트가 부족합니다! (필요: 5,000 카운트)")
+
+def open_box():
+    if st.session_state.box_inventory > 0:
+        st.session_state.box_inventory -= 1
+        reward = random.randint(100, 1000)
+        st.session_state.count += reward
+        st.toast(f"🎁 상자를 열어 +{reward:,} 카운트를 획득했습니다!", icon="🎉")
+    else:
+        st.toast("❌ 보유 중인 상자가 없습니다.")
 
 def buy_monster_drink():
     if st.session_state.monster_bought_count >= 5:
@@ -289,15 +327,6 @@ st.components.v1.html(
                     break;
                 }
             }
-        } else if (e.code === 'KeyE' && pressedKeys.size === 1) {
-            e.preventDefault();
-            const btns = parentDoc.querySelectorAll('button');
-            for (let btn of btns) {
-                if (btn.innerText.includes('상점')) {
-                    btn.click();
-                    break;
-                }
-            }
         }
     }
 
@@ -321,6 +350,29 @@ st.button("Cheat", key="cheat_btn", on_click=lambda: increment(5000), type="seco
 # 5. UI 구성 및 테마 CSS 적용
 st.markdown(THEME_STYLES[st.session_state.current_theme], unsafe_allow_html=True)
 
+# 🐱 고양이 움직임 CSS / HTML
+if st.session_state.has_cat:
+    st.markdown("""
+        <style>
+        @keyframes floatCat {
+            0%   { top: 10%; left: 5%; transform: scaleX(1); }
+            25%  { top: 70%; left: 80%; transform: scaleX(1); }
+            50%  { top: 80%; left: 20%; transform: scaleX(-1); }
+            75%  { top: 20%; left: 85%; transform: scaleX(-1); }
+            100% { top: 10%; left: 5%; transform: scaleX(1); }
+        }
+        .moving-cat {
+            position: fixed;
+            width: 75px;
+            height: 75px;
+            z-index: 99999;
+            pointer-events: none;
+            animation: floatCat 18s ease-in-out infinite;
+        }
+        </style>
+        <img class="moving-cat" src="https://media.giphy.com/media/v1.Y2lkPTc5MGI3NjExOHp1cWZvZDVpZTN2N2hsdWtrcDF3bWVxeW15MmV6MG1zY3o0OHVnZCZlcD12MV9pbnRlcm5hbF9naWZfYnlfaWQmY3Q9cw/C9x8gX02vf3Ak/giphy.gif" alt="Cat">
+    """, unsafe_allow_html=True)
+
 st.title("🔢 스페이스 카운터")
 
 st.markdown("""
@@ -333,13 +385,13 @@ st.markdown("""
 if is_buff_active:
     st.info(f"⚡ **몬스터 에너기 버프 활성화!** (클릭당 +{current_per_click} / 남은 시간: {remaining_buff_time}초)")
 
-# 6. 조건부 카운터 출력
+# 6. 실시간 오토 카운터 및 고양이 자동 상자 획득
 @st.fragment(run_every=1)
 def render_auto_counter():
     st.session_state.count += st.session_state.auto_clickers
     st.metric("현재 카운트 (실시간)", f"{st.session_state.count:,}")
 
-if st.session_state.auto_clickers > 0:
+if st.session_state.auto_clickers > 0 or st.session_state.has_cat:
     render_auto_counter()
 else:
     st.metric("현재 카운트", f"{st.session_state.count:,}")
@@ -352,7 +404,8 @@ st.button(
 
 st.write("---")
 
-col_btn1, col_btn2, col_btn3, col_btn4 = st.columns(4)
+# 탭 메뉴 (5개 코너)
+col_btn1, col_btn2, col_btn3, col_btn4, col_btn5 = st.columns(5)
 with col_btn1:
     st.button(
         f"🏪 상점 {'닫기' if st.session_state.show_shop else '열기'}", 
@@ -362,19 +415,27 @@ with col_btn1:
     )
 with col_btn2:
     st.button(
-        f"🎒 가방 ({st.session_state.monster_inventory})", 
+        f"🐾 펫 상점 {'닫기' if st.session_state.show_pet_shop else '열기'}", 
+        on_click=lambda: toggle_tab("pet_shop"), 
+        type="primary" if st.session_state.show_pet_shop else "secondary",
+        use_container_width=True
+    )
+with col_btn3:
+    total_inv = st.session_state.monster_inventory + st.session_state.box_inventory
+    st.button(
+        f"🎒 가방 ({total_inv})", 
         on_click=lambda: toggle_tab("inventory"), 
         type="primary" if st.session_state.show_inventory else "secondary",
         use_container_width=True
     )
-with col_btn3:
+with col_btn4:
     st.button(
         f"🎰 도박장 {'닫기' if st.session_state.show_casino else '열기'}", 
         on_click=lambda: toggle_tab("casino"), 
         type="primary" if st.session_state.show_casino else "secondary",
         use_container_width=True
     )
-with col_btn4:
+with col_btn5:
     st.button(
         f"🎨 테마 {'닫기' if st.session_state.show_theme_tab else '목록'}", 
         on_click=lambda: toggle_tab("theme"), 
@@ -382,9 +443,9 @@ with col_btn4:
         use_container_width=True
     )
 
-# 7. 상점 UI
+# 7. 일반 강화 & 아이템 상점 UI
 if st.session_state.show_shop:
-    with st.expander("🛒 아이템 & 강화 상점", expanded=True):
+    with st.expander("🛒 강화 및 아이템 상점", expanded=True):
         st.markdown("**🥤 몬스터 음료 (핑크 - 파이프라인 펀치)**")
         col_m_img, col_m_desc = st.columns([1, 2])
         with col_m_img:
@@ -453,13 +514,41 @@ if st.session_state.show_shop:
             use_container_width=True
         )
 
-# 8. 🎒 인벤토리 UI
+# 8. 🐾 펫 상점 UI
+if st.session_state.show_pet_shop:
+    with st.expander("🐾 펫 상점", expanded=True):
+        st.markdown("**🐱 귀여운 고양이**")
+        col_pet_img, col_pet_desc = st.columns([1, 2])
+        with col_pet_img:
+            st.image("https://media.giphy.com/media/v1.Y2lkPTc5MGI3NjExOHp1cWZvZDVpZTN2N2hsdWtrcDF3bWVxeW15MmV6MG1zY3o0OHVnZCZlcD12MV9pbnRlcm5hbF9naWZfYnlfaWQmY3Q9cw/C9x8gX02vf3Ak/giphy.gif", width=120)
+        with col_pet_desc:
+            st.write("- **효과**: 화면 배경에서 자유롭게 노닐며, **1분마다 밖으로 나가 선물 상자를 물어옵니다!**")
+            st.write("- **상자 내용물**: 사용 시 **100 ~ 1,000 카운트** 랜덤 획득")
+            st.write("- **가격**: **5,000 카운트**")
+            
+            if st.session_state.has_cat:
+                st.success("✅ 이미 입양된 고양이입니다.")
+            else:
+                can_buy_pet = st.session_state.count >= 5000
+                st.button(
+                    "🐱 고양이 입양하기 (5,000 카운트)",
+                    key="buy_cat_btn",
+                    on_click=buy_cat,
+                    disabled=not can_buy_pet,
+                    use_container_width=True
+                )
+
+# 9. 🎒 인벤토리 UI
 if st.session_state.show_inventory:
     with st.expander("🎒 내 인벤토리", expanded=True):
+        has_items = False
+        
+        # 몬스터 음료
         if st.session_state.monster_inventory > 0:
+            has_items = True
             col_inv_img, col_inv_desc = st.columns([1, 2])
             with col_inv_img:
-                st.image("https://images.unsplash.com/photo-1622543925917-763c34d1a86e?w=300", width=100)
+                st.image("https://images.unsplash.com/photo-1622543925917-763c34d1a86e?w=300", width=90)
             with col_inv_desc:
                 st.markdown("**🥤 몬스터 에너기 (핑크)**")
                 st.write(f"보유 수량: **{st.session_state.monster_inventory}개**")
@@ -470,10 +559,29 @@ if st.session_state.show_inventory:
                     on_click=use_monster_drink,
                     use_container_width=True
                 )
-        else:
-            st.info("🎒 인벤토리가 비어 있습니다. 상점에서 아이템을 구매해보세요!")
+            st.write("---")
+            
+        # 고양이의 선물 상자
+        if st.session_state.box_inventory > 0:
+            has_items = True
+            col_box_img, col_box_desc = st.columns([1, 2])
+            with col_box_img:
+                st.write("🎁")
+            with col_box_desc:
+                st.markdown("**🎁 고양이가 물어온 상자**")
+                st.write(f"보유 수량: **{st.session_state.box_inventory}개**")
+                st.caption("열면 100 ~ 1,000 카운트를 무작위로 획득합니다.")
+                st.button(
+                    "🎁 상자 열기", 
+                    key="open_box_btn",
+                    on_click=open_box,
+                    use_container_width=True
+                )
 
-# 9. 도박장 UI
+        if not has_items:
+            st.info("🎒 인벤토리가 비어 있습니다. 상점에서 아이템을 구매하거나 고양이를 입양해 보세요!")
+
+# 10. 도박장 UI
 if st.session_state.show_casino:
     with st.expander("🎰 행운의 도박장", expanded=True):
         st.markdown("**배팅 금액 및 남아있는 횟수**")
@@ -507,7 +615,7 @@ if st.session_state.show_casino:
                     use_container_width=True
                 )
 
-# 10. 🎨 테마 보관함 탭 UI
+# 11. 🎨 테마 보관함 탭 UI
 if st.session_state.show_theme_tab:
     with st.expander("🎨 보유한 테마 목록", expanded=True):
         st.write("해금한 테마를 자유롭게 선택하여 변경할 수 있습니다.")
