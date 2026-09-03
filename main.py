@@ -67,6 +67,14 @@ THEME_STYLES = {
             -webkit-text-stroke: 0px transparent !important;
             text-shadow: none !important;
         }
+        div[data-testid="stExpander"],
+        div[data-testid="stExpander"] > details,
+        div[data-testid="stExpander"] summary,
+        div[data-testid="stExpanderDetails"] {
+            background-color: #F0F2F6 !important;
+            border-color: #E0E0E0 !important;
+            color: #000000 !important;
+        }
         .stButton>button { 
             background-color: #FFFFFF !important; 
             color: #000000 !important;
