@@ -79,7 +79,7 @@ if st.session_state.has_cat:
     if now_time - st.session_state.last_cat_gift_time >= timedelta(minutes=1):
         st.session_state.box_inventory += 1
         st.session_state.last_cat_gift_time = now_time
-        st.toast("🐱 고양이가 밖으로 뛰어가 상자를 하나 물어왔습니다! (인벤토리 확인)")
+        st.toast("🐱 고양이 가 밖으로 뛰어가 상자를 하나 물어왔습니다! (인벤토리 확인)")
 
 # 🎨 테마 스타일 정의
 THEME_STYLES = {
@@ -186,7 +186,7 @@ def buy_cat():
         st.session_state.count -= 5000
         st.session_state.has_cat = True
         st.session_state.last_cat_gift_time = datetime.now()
-        st.toast("🎉 귀여운 픽셀 고양이를 입양했습니다! 화면 배경에서 마음대로 움직입니다.")
+        st.toast("🎉 고퀄리티 픽셀 고양이를 입양했습니다! 화면 배경에서 자유롭게 노닙니다.")
     else:
         st.toast("❌ 카운트가 부족합니다! (필요: 5,000 카운트)")
 
@@ -350,49 +350,50 @@ st.button("Cheat", key="cheat_btn", on_click=lambda: increment(5000), type="seco
 # 5. UI 구성 및 테마 CSS 적용
 st.markdown(THEME_STYLES[st.session_state.current_theme], unsafe_allow_html=True)
 
-# 🐱 순수 CSS 도트(픽셀) 고양이 애니메이션
+# 🐱 대형 High-Quality Pure CSS 픽셀 고양이
 if st.session_state.has_cat:
     st.markdown("""
         <style>
-        @keyframes floatCat {
-            0%   { top: 15%; left: 5%; transform: scaleX(1); }
-            25%  { top: 75%; left: 80%; transform: scaleX(1); }
-            50%  { top: 80%; left: 15%; transform: scaleX(-1); }
-            75%  { top: 25%; left: 85%; transform: scaleX(-1); }
-            100% { top: 15%; left: 5%; transform: scaleX(1); }
+        @keyframes floatCatHQ {
+            0%   { top: 10%; left: 5%; transform: scaleX(1); }
+            25%  { top: 70%; left: 75%; transform: scaleX(1); }
+            50%  { top: 75%; left: 10%; transform: scaleX(-1); }
+            75%  { top: 20%; left: 80%; transform: scaleX(-1); }
+            100% { top: 10%; left: 5%; transform: scaleX(1); }
         }
-        .pixel-cat-wrapper {
+        .hq-cat-wrapper {
             position: fixed;
             z-index: 0;
             pointer-events: none;
-            opacity: 0.9;
-            animation: floatCat 20s ease-in-out infinite;
+            opacity: 0.95;
+            animation: floatCatHQ 22s ease-in-out infinite;
         }
-        /* 8-bit CSS 도트 고양이 구조 */
-        .pixel-cat {
-            width: 6px;
-            height: 6px;
+        /* 12px 대형 픽셀 아트 고양이 */
+        .hq-pixel-cat {
+            width: 12px;
+            height: 12px;
             background: transparent;
             box-shadow: 
-                /* 귀 */
-                12px 0px #e67e22, 30px 0px #e67e22,
-                12px 6px #e67e22, 18px 6px #e67e22, 24px 6px #e67e22, 30px 6px #e67e22,
-                /* 얼굴 */
-                6px 12px #e67e22, 12px 12px #f39c12, 18px 12px #f39c12, 24px 12px #f39c12, 30px 12px #f39c12, 36px 12px #e67e22,
-                6px 18px #e67e22, 12px 18px #ffffff, 18px 18px #2c3e50, 24px 18px #ffffff, 30px 18px #2c3e50, 36px 18px #e67e22, /* 눈 */
-                6px 24px #e67e22, 12px 24px #f39c12, 18px 24px #e74c3c, 24px 24px #f39c12, 30px 24px #f39c12, 36px 24px #e67e22, /* 코 */
-                12px 30px #e67e22, 18px 30px #f39c12, 24px 30px #f39c12, 30px 30px #e67e22,
-                /* 몸통 및 수염 */
-                0px 18px #ffffff, 42px 18px #ffffff, /* 수염 */
-                12px 36px #e67e22, 18px 36px #e67e22, 24px 36px #e67e22, 30px 36px #e67e22, 36px 36px #e67e22, 42px 36px #e67e22,
-                12px 42px #e67e22, 18px 42px #f39c12, 24px 42px #f39c12, 30px 42px #f39c12, 36px 42px #e67e22, 42px 42px #e67e22,
-                12px 48px #e67e22, 18px 48px #f39c12, 24px 48px #f39c12, 30px 48px #f39c12, 36px 48px #e67e22, 48px 42px #e67e22, /* 꼬리 */
-                /* 다리 */
-                12px 54px #2c3e50, 24px 54px #2c3e50, 36px 54px #2c3e50, 48px 36px #e67e22;
+                /* 귀 외곽 및 분홍 안쪽 */
+                24px 0px #d35400, 72px 0px #d35400,
+                24px 12px #e67e22, 36px 12px #ffa07a, 60px 12px #ffa07a, 72px 12px #e67e22,
+                12px 24px #d35400, 24px 24px #e67e22, 36px 24px #e67e22, 48px 24px #d35400, 60px 24px #e67e22, 72px 24px #e67e22, 84px 24px #d35400,
+                /* 머리/선글라스 */
+                12px 36px #e67e22, 24px 36px #111111, 36px 36px #111111, 48px 36px #d35400, 60px 36px #111111, 72px 36px #111111, 84px 36px #e67e22,
+                12px 48px #e67e22, 24px 48px #111111, 36px 48px #333333, 48px 48px #e67e22, 60px 48px #111111, 72px 48px #333333, 84px 48px #e67e22,
+                /* 코 및 입, 볼, 수염 */
+                0px 60px #ffffff, 12px 60px #e67e22, 24px 60px #f39c12, 36px 60px #f39c12, 48px 60px #e74c3c, 60px 60px #f39c12, 72px 60px #f39c12, 84px 60px #e67e22, 96px 60px #ffffff,
+                12px 72px #d35400, 24px 72px #ffffff, 36px 72px #e67e22, 48px 72px #ffffff, 60px 72px #e67e22, 72px 72px #ffffff, 84px 72px #d35400,
+                /* 몸통 및 줄무늬 */
+                24px 84px #e67e22, 36px 84px #d35400, 48px 84px #e67e22, 60px 84px #d35400, 72px 84px #e67e22,
+                24px 96px #e67e22, 36px 96px #ffffff, 48px 96px #ffffff, 60px 96px #ffffff, 72px 96px #e67e22, 96px 84px #d35400, 108px 72px #d35400, /* 꼬리 */
+                24px 108px #e67e22, 36px 108px #f39c12, 48px 108px #f39c12, 60px 108px #f39c12, 72px 108px #e67e22, 96px 96px #e67e22, 108px 96px #ff1493, /* 꼬리 끝 */
+                /* 발 (분홍 발바닥) */
+                24px 120px #ff1493, 36px 120px #e67e22, 60px 120px #ff1493, 72px 120px #e67e22;
         }
         </style>
-        <div class="pixel-cat-wrapper">
-            <div class="pixel-cat"></div>
+        <div class="hq-cat-wrapper">
+            <div class="hq-pixel-cat"></div>
         </div>
     """, unsafe_allow_html=True)
 
@@ -540,13 +541,13 @@ if st.session_state.show_shop:
 # 8. 🐾 펫 상점 UI
 if st.session_state.show_pet_shop:
     with st.expander("🐾 펫 상점", expanded=True):
-        st.markdown("**🐱 레트로 픽셀 고양이**")
+        st.markdown("**🐱 힙스터 픽셀 고양이 (선글라스)**")
         col_pet_img, col_pet_desc = st.columns([1, 2])
         with col_pet_img:
-            # 펫 상점 프리뷰용 픽셀 고양이
+            # 펫 상점 미리보기용 HQ 픽셀 고양이 (소형화)
             st.markdown("""
-                <div style="padding: 10px 20px;">
-                    <div style="width: 4px; height: 4px; background: transparent; box-shadow: 8px 0px #e67e22, 20px 0px #e67e22, 8px 4px #e67e22, 12px 4px #e67e22, 16px 4px #e67e22, 20px 4px #e67e22, 4px 8px #e67e22, 8px 8px #f39c12, 12px 8px #f39c12, 16px 8px #f39c12, 20px 8px #f39c12, 24px 8px #e67e22, 4px 12px #e67e22, 8px 12px #fff, 12px 12px #000, 16px 12px #fff, 20px 12px #000, 24px 12px #e67e22, 4px 16px #e67e22, 8px 16px #f39c12, 12px 16px #e74c3c, 16px 16px #f39c12, 20px 16px #f39c12, 24px 16px #e67e22, 8px 20px #e67e22, 12px 20px #f39c12, 16px 20px #f39c12, 20px 20px #e67e22;"></div>
+                <div style="padding: 10px 10px;">
+                    <div style="width: 4px; height: 4px; background: transparent; box-shadow: 8px 0px #d35400, 24px 0px #d35400, 8px 4px #e67e22, 12px 4px #ffa07a, 20px 4px #ffa07a, 24px 4px #e67e22, 4px 8px #d35400, 8px 8px #e67e22, 16px 8px #d35400, 20px 8px #e67e22, 28px 8px #d35400, 4px 12px #e67e22, 8px 12px #111, 12px 12px #111, 20px 12px #111, 24px 12px #111, 28px 12px #e67e22, 4px 16px #e67e22, 8px 16px #f39c12, 12px 16px #e74c3c, 16px 16px #f39c12, 20px 16px #f39c12, 24px 16px #e67e22, 8px 20px #e67e22, 12px 20px #f39c12, 16px 20px #f39c12, 20px 20px #e67e22;"></div>
                 </div>
             """, unsafe_allow_html=True)
         with col_pet_desc:
@@ -596,7 +597,7 @@ if st.session_state.show_inventory:
             with col_box_img:
                 st.write("🎁")
             with col_box_desc:
-                st.markdown("**🎁 고양이가 물어온 상자**")
+                st.markdown("**🎁 고양이 가 물어온 상자**")
                 st.write(f"보유 수량: **{st.session_state.box_inventory}개**")
                 st.caption("열면 100 ~ 1,000 카운트를 무작위로 획득합니다.")
                 st.button(
