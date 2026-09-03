@@ -44,39 +44,54 @@ if "gamble_limits" not in st.session_state:
         10000: {"remaining": 50, "reset_at": reset_time}
     }
 
-# 🎨 테마 스타일 정의
+# 🎨 테마 스타일 정의 (시인성 확보를 위한 글자 테두리 효과 강화)
 THEME_STYLES = {
     "다크 모드": """
         <style>
         .stApp { background-color: #0E1117; color: #FAFAFA; }
-        div[data-testid="stMetricValue"] { color: #FFFFFF !important; }
+        div[data-testid="stMetricValue"] { 
+            color: #FFFFFF !important; 
+            text-shadow: -1px -1px 0 #000, 1px -1px 0 #000, -1px 1px 0 #000, 1px 1px 0 #000, 0 0 8px rgba(255,255,255,0.8) !important; 
+        }
         </style>
     """,
     "화이트 모드": """
         <style>
         .stApp { background-color: #FFFFFF; color: #111111; }
-        div[data-testid="stMetricValue"] { color: #111111 !important; }
+        div[data-testid="stMetricValue"] { 
+            color: #111111 !important; 
+            text-shadow: -1px -1px 0 #FFFFFF, 1px -1px 0 #FFFFFF, -1px 1px 0 #FFFFFF, 1px 1px 0 #FFFFFF, 0 0 5px rgba(0,0,0,0.2) !important; 
+        }
         .stButton>button { background-color: #F0F2F6 !important; color: #111111 !important; border: 1px solid #D1D5DB !important; }
         </style>
     """,
     "네온 시티": """
         <style>
         .stApp { background-color: #0d0221; color: #00f6ff; }
-        div[data-testid="stMetricValue"] { color: #ff007f !important; text-shadow: 0 0 10px #ff007f; }
+        div[data-testid="stMetricValue"] { 
+            color: #ff007f !important; 
+            text-shadow: -1px -1px 0 #000, 1px -1px 0 #000, -1px 1px 0 #000, 1px 1px 0 #000, 0 0 12px #ff007f !important; 
+        }
         .stButton>button { background-color: #241442 !important; color: #00f6ff !important; border: 1px solid #00f6ff !important; }
         </style>
     """,
     "골드 라운지": """
         <style>
         .stApp { background-color: #1a150e; color: #f3e5ab; }
-        div[data-testid="stMetricValue"] { color: #ffd700 !important; text-shadow: 0 0 8px #ffd700; }
+        div[data-testid="stMetricValue"] { 
+            color: #ffd700 !important; 
+            text-shadow: -1px -1px 0 #000, 1px -1px 0 #000, -1px 1px 0 #000, 1px 1px 0 #000, 0 0 10px #ffd700 !important; 
+        }
         .stButton>button { background-color: #33291a !important; color: #ffd700 !important; border: 1px solid #ffd700 !important; }
         </style>
     """,
     "레트로 픽셀": """
         <style>
         .stApp { background-color: #001100; color: #00ff00; font-family: monospace; }
-        div[data-testid="stMetricValue"] { color: #00ff00 !important; text-shadow: 0 0 5px #00ff00; }
+        div[data-testid="stMetricValue"] { 
+            color: #00ff00 !important; 
+            text-shadow: -1px -1px 0 #000, 1px -1px 0 #000, -1px 1px 0 #000, 1px 1px 0 #000, 0 0 8px #00ff00 !important; 
+        }
         .stButton>button { background-color: #002200 !important; color: #00ff00 !important; border: 1px solid #00ff00 !important; }
         </style>
     """
@@ -153,7 +168,6 @@ def buy_auto_clicker():
 def draw_theme():
     all_themes = ["다크 모드", "화이트 모드", "네온 시티", "골드 라운지", "레트로 픽셀"]
     
-    # 올 해금 되었는지 확인
     if len(st.session_state.unlocked_themes) >= len(all_themes):
         st.toast("🎉 이미 모든 테마를 해금하셨습니다!")
         return
