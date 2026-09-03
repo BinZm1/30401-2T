@@ -63,6 +63,7 @@ THEME_STYLES = {
         .stApp, .stApp p, .stApp span, .stApp label, .stApp h1, .stApp h2, .stApp h3, 
         .stApp div, div[data-testid="stMetricValue"], .stButton>button, .stButton>button p {
             color: #FFFFFF !important;
+            -webkit-text-fill-color: #FFFFFF !important;
             -webkit-text-stroke: 1.2px #000000 !important;
             text-shadow: 
                 -1px -1px 0 #000,
