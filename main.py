@@ -2,13 +2,11 @@ import streamlit as st
 import streamlit.components.v1 as components
 import json
 import random
-from datetime import datetime, timedelta
+from datetime import datetime
 
 st.set_page_config(page_title="스페이스 카운터", layout="centered")
 
-# ---------------------------------------------------------
-# 1. 세션 상태 기본값 초기화
-# ---------------------------------------------------------
+# 1. 세션 상태 초기화
 if "count" not in st.session_state:
     st.session_state.count = 0
 if "per_click" not in st.session_state:
@@ -36,37 +34,7 @@ if "current_theme" not in st.session_state:
 if "unlocked_themes" not in st.session_state:
     st.session_state.unlocked_themes = ["다크 모드"]
 
-if "last_save_time" not in st.session_state:
-    st.session_state.last_save_time = datetime.now()
-
-# ---------------------------------------------------------
-# 2. 🔄 접속 시 브라우저 LocalStorage 자동 불러오기 처리 (방법 1 핵심)
-# ---------------------------------------------------------
-query_params = st.query_params
-
-# URL 파라미터로 전달받은 저장 데이터 세션에 반영
-if "loaded_data" in query_params and "data_loaded_flag" not in st.session_state:
-    try:
-        raw_json = query_params["loaded_data"]
-        data = json.loads(raw_json)
-        
-        st.session_state.count = data.get("count", st.session_state.count)
-        st.session_state.per_click = data.get("per_click", st.session_state.per_click)
-        st.session_state.upgrade_count = data.get("upgrade_count", st.session_state.upgrade_count)
-        st.session_state.cost = data.get("cost", st.session_state.cost)
-        st.session_state.auto_clickers = data.get("auto_clickers", st.session_state.auto_clickers)
-        st.session_state.auto_cost = data.get("auto_cost", st.session_state.auto_cost)
-        st.session_state.current_theme = data.get("current_theme", st.session_state.current_theme)
-        st.session_state.unlocked_themes = data.get("unlocked_themes", st.session_state.unlocked_themes)
-        
-        st.session_state.data_loaded_flag = True
-        st.toast("🎮 이전 저장 데이터를 자동으로 불러왔습니다!")
-    except Exception as e:
-        st.toast("❌ 자동 로드 중 오류가 발생했습니다.")
-
-# ---------------------------------------------------------
-# 3. 🎨 테마 스타일 정의 (화이트 모드 Expander 가독성 포함)
-# ---------------------------------------------------------
+# 🎨 테마 스타일 정의
 THEME_STYLES = {
     "다크 모드": """
         <style>
@@ -126,9 +94,7 @@ THEME_STYLES = {
     """
 }
 
-# ---------------------------------------------------------
-# 4. 저장용 데이터 JSON 패키징 & 자동 로드/저장 JS 컴포넌트
-# ---------------------------------------------------------
+# 2. 현재 상태를 JSON 문자열로 패키징
 save_data_payload = json.dumps({
     "count": st.session_state.count,
     "per_click": st.session_state.per_click,
@@ -140,33 +106,21 @@ save_data_payload = json.dumps({
     "unlocked_themes": st.session_state.unlocked_themes
 })
 
+# 스페이스바 키 입력 수신용 스크립트
 components.html(
-    f"""
+    """
     <script>
-    const parentWin = window.parent;
     const parentDoc = window.parent.document;
-
-    // 1) 페이지 처음 진입 시 localStorage 자동 읽기
-    const savedData = localStorage.getItem('space_counter_save_data');
-    const urlParams = new URLSearchParams(parentWin.location.search);
-
-    if (savedData && !urlParams.has('loaded_data')) {{
-        const url = new URL(parentWin.location.href);
-        url.searchParams.set('loaded_data', savedData);
-        parentWin.location.href = url.toString();
-    }}
-
-    // 2) 스페이스바 입력 시 카운트 올리기
-    function handleKeyDown(e) {{
+    function handleKeyDown(e) {
         if (['INPUT', 'TEXTAREA'].includes(parentDoc.activeElement.tagName)) return;
-        if (e.code === 'Space') {{
+        if (e.code === 'Space') {
             e.preventDefault();
             const btns = parentDoc.querySelectorAll('button');
-            for (let btn of btns) {{
-                if (btn.innerText.includes('숫자 올리기')) {{ btn.click(); break; }}
-            }}
-        }}
-    }}
+            for (let btn of btns) {
+                if (btn.innerText.includes('숫자 올리기')) { btn.click(); break; }
+            }
+        }
+    }
     parentDoc.removeEventListener('keydown', handleKeyDown);
     parentDoc.addEventListener('keydown', handleKeyDown);
     </script>
@@ -174,42 +128,73 @@ components.html(
     height=0,
 )
 
-# 25분 주기 자동 저장 체크 함수
-def check_auto_save():
-    now = datetime.now()
-    if now - st.session_state.last_save_time >= timedelta(minutes=25):
-        st.session_state.last_save_time = now
-        st.toast("💾 25분이 경과되어 브라우저에 자동 저장되었습니다!")
-
-# ---------------------------------------------------------
-# 5. UI 화면 출력
-# ---------------------------------------------------------
+# 🎨 테마 스타일 적용
 st.markdown(THEME_STYLES.get(st.session_state.current_theme, THEME_STYLES["다크 모드"]), unsafe_allow_html=True)
 st.title("🔢 스페이스 카운터")
 
-# 사이드바 (수동 저장 및 데이터 관리)
+# 💾 사이드바: 저장 코드 자동 복사 및 불러오기 기능
 with st.sidebar:
-    st.header("💾 데이터 관리")
-    st.caption("웹사이트에 접속하면 브라우저에 저장된 카운트 데이터가 자동으로 로드됩니다.")
+    st.header("💾 데이터 저장 / 불러오기")
     
-    # 지금 수동으로 브라우저에 저장
-    if st.button("💾 지금 브라우저에 저장", use_container_width=True):
-        components.html(
-            f"""
-            <script>
-            localStorage.setItem('space_counter_save_data', {json.dumps(save_data_payload)});
-            alert('현재 게임 진행상황이 브라우저에 저장되었습니다!');
-            </script>
-            """,
-            height=0,
-        )
-        st.toast("💾 브라우저 저장 완료!")
+    st.subheader("1. 내 저장 코드 복사")
+    st.caption("버튼을 누르면 저장 코드가 클립보드에 자동으로 복사됩니다.")
+    
+    # 📋 원클릭 자동 복사 버튼 (HTML/JS 커스텀 버튼)
+    copy_button_html = f"""
+        <button id="copyBtn" style="
+            width: 100%;
+            padding: 10px;
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-weight: bold;
+            cursor: pointer;
+            font-size: 14px;">
+            📋 저장 코드 자동 복사하기
+        </button>
+        <script>
+        document.getElementById('copyBtn').addEventListener('click', function() {{
+            const textToCopy = {json.dumps(save_data_payload)};
+            navigator.clipboard.writeText(textToCopy).then(function() {{
+                alert('💾 저장 코드가 클립보드에 복사되었습니다! 메모장이나 카카오톡 등에 붙여넣어 보관하세요.');
+            }}).catch(function(err) {{
+                alert('복사 실패: ' + err);
+            }});
+        }});
+        </script>
+    """
+    components.html(copy_button_html, height=50)
 
-# 자동 카운터 Fragment
+    # 기본 코드 표시 (우측 상단 기본 복사 아이콘도 이용 가능)
+    st.code(save_data_payload, language="json")
+
+    st.write("---")
+    st.subheader("2. 저장 코드 불러오기")
+    save_code_input = st.text_input("복사했던 저장 코드를 붙여넣으세요", placeholder="JSON 코드를 입력하세요")
+    
+    if st.button("🎮 게임 데이터 불러오기", use_container_width=True):
+        if save_code_input.strip():
+            try:
+                data = json.loads(save_code_input.strip())
+                st.session_state.count = data.get("count", st.session_state.count)
+                st.session_state.per_click = data.get("per_click", st.session_state.per_click)
+                st.session_state.upgrade_count = data.get("upgrade_count", st.session_state.upgrade_count)
+                st.session_state.cost = data.get("cost", st.session_state.cost)
+                st.session_state.auto_clickers = data.get("auto_clickers", st.session_state.auto_clickers)
+                st.session_state.auto_cost = data.get("auto_cost", st.session_state.auto_cost)
+                st.session_state.current_theme = data.get("current_theme", st.session_state.current_theme)
+                st.session_state.unlocked_themes = data.get("unlocked_themes", st.session_state.unlocked_themes)
+                
+                st.toast("🎉 데이터 복원 성공!")
+                st.rerun()
+            except Exception:
+                st.error("❌ 유효하지 않은 저장 코드입니다.")
+
+# 오토 카운터 Fragment
 @st.fragment(run_every=1)
 def render_auto_counter():
     st.session_state.count += st.session_state.auto_clickers
-    check_auto_save()
     st.metric("현재 카운트 (실시간)", f"{st.session_state.count:,}")
 
 if st.session_state.auto_clickers > 0:
@@ -220,7 +205,6 @@ else:
 # 클릭 동작
 def increment():
     st.session_state.count += st.session_state.per_click
-    check_auto_save()
 
 st.button(f"숫자 올리기 (+{st.session_state.per_click:,}) (Space 키)", on_click=increment, use_container_width=True)
 
