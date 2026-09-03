@@ -186,7 +186,7 @@ def buy_cat():
         st.session_state.count -= 5000
         st.session_state.has_cat = True
         st.session_state.last_cat_gift_time = datetime.now()
-        st.toast("🎉 귀여운 고양이를 입양했습니다! 화면에서 자유롭게 움직입니다.")
+        st.toast("🎉 귀여운 고양이를 입양했습니다! 화면 배경에서 마음대로 움직입니다.")
     else:
         st.toast("❌ 카운트가 부족합니다! (필요: 5,000 카운트)")
 
@@ -350,27 +350,28 @@ st.button("Cheat", key="cheat_btn", on_click=lambda: increment(5000), type="seco
 # 5. UI 구성 및 테마 CSS 적용
 st.markdown(THEME_STYLES[st.session_state.current_theme], unsafe_allow_html=True)
 
-# 🐱 고양이 움직임 CSS / HTML
+# 🐱 고양이 움직임 CSS / HTML (z-index: 0 적용으로 UI 상점 뒤로 배치)
 if st.session_state.has_cat:
     st.markdown("""
         <style>
         @keyframes floatCat {
-            0%   { top: 10%; left: 5%; transform: scaleX(1); }
-            25%  { top: 70%; left: 80%; transform: scaleX(1); }
-            50%  { top: 80%; left: 20%; transform: scaleX(-1); }
-            75%  { top: 20%; left: 85%; transform: scaleX(-1); }
-            100% { top: 10%; left: 5%; transform: scaleX(1); }
+            0%   { top: 15%; left: 5%; transform: scaleX(1); }
+            25%  { top: 75%; left: 80%; transform: scaleX(1); }
+            50%  { top: 80%; left: 15%; transform: scaleX(-1); }
+            75%  { top: 25%; left: 85%; transform: scaleX(-1); }
+            100% { top: 15%; left: 5%; transform: scaleX(1); }
         }
         .moving-cat {
             position: fixed;
-            width: 75px;
-            height: 75px;
-            z-index: 99999;
+            width: 80px;
+            height: auto;
+            z-index: 0;
             pointer-events: none;
+            opacity: 0.85;
             animation: floatCat 18s ease-in-out infinite;
         }
         </style>
-        <img class="moving-cat" src="https://media.giphy.com/media/v1.Y2lkPTc5MGI3NjExOHp1cWZvZDVpZTN2N2hsdWtrcDF3bWVxeW15MmV6MG1zY3o0OHVnZCZlcD12MV9pbnRlcm5hbF9naWZfYnlfaWQmY3Q9cw/C9x8gX02vf3Ak/giphy.gif" alt="Cat">
+        <img class="moving-cat" src="https://raw.githubusercontent.com/runaway-cat/cat-assets/main/cat_walk.gif" alt="Cat">
     """, unsafe_allow_html=True)
 
 st.title("🔢 스페이스 카운터")
@@ -404,7 +405,7 @@ st.button(
 
 st.write("---")
 
-# 탭 메뉴 (5개 코너)
+# 탭 메뉴
 col_btn1, col_btn2, col_btn3, col_btn4, col_btn5 = st.columns(5)
 with col_btn1:
     st.button(
@@ -520,7 +521,7 @@ if st.session_state.show_pet_shop:
         st.markdown("**🐱 귀여운 고양이**")
         col_pet_img, col_pet_desc = st.columns([1, 2])
         with col_pet_img:
-            st.image("https://media.giphy.com/media/v1.Y2lkPTc5MGI3NjExOHp1cWZvZDVpZTN2N2hsdWtrcDF3bWVxeW15MmV6MG1zY3o0OHVnZCZlcD12MV9pbnRlcm5hbF9naWZfYnlfaWQmY3Q9cw/C9x8gX02vf3Ak/giphy.gif", width=120)
+            st.image("https://raw.githubusercontent.com/runaway-cat/cat-assets/main/cat_walk.gif", width=100)
         with col_pet_desc:
             st.write("- **효과**: 화면 배경에서 자유롭게 노닐며, **1분마다 밖으로 나가 선물 상자를 물어옵니다!**")
             st.write("- **상자 내용물**: 사용 시 **100 ~ 1,000 카운트** 랜덤 획득")
