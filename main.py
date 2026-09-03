@@ -1,8 +1,10 @@
 import streamlit as st
+import streamlit.components.v1 as components
+import json
 import random
 from datetime import datetime, timedelta
 
-st.set_page_config(page_title="스페이스 카운터 & 상점", layout="centered")
+st.set_page_config(page_title="스페이스 카운터", layout="centered")
 
 # 1. 세션 상태 초기화
 if "count" not in st.session_state:
@@ -17,49 +19,35 @@ if "auto_clickers" not in st.session_state:
     st.session_state.auto_clickers = 0
 if "auto_cost" not in st.session_state:
     st.session_state.auto_cost = 5000
+
+# UI 탭 세션
 if "show_shop" not in st.session_state:
     st.session_state.show_shop = False
 if "show_casino" not in st.session_state:
     st.session_state.show_casino = False
 if "show_theme_tab" not in st.session_state:
     st.session_state.show_theme_tab = False
+
 if "current_theme" not in st.session_state:
     st.session_state.current_theme = "다크 모드"
 if "unlocked_themes" not in st.session_state:
     st.session_state.unlocked_themes = ["다크 모드"]
 
-# 🎰 도박 횟수 및 쿨타임 초기화
-LIMIT_CONFIG = {
-    100: 10,
-    1000: 5,
-    10000: 50
-}
+if "last_save_time" not in st.session_state:
+    st.session_state.last_save_time = datetime.now()
 
-if "gamble_limits" not in st.session_state:
-    now = datetime.now()
-    reset_time = now + timedelta(hours=1)
-    st.session_state.gamble_limits = {
-        100: {"remaining": 10, "reset_at": reset_time},
-        1000: {"remaining": 5, "reset_at": reset_time},
-        10000: {"remaining": 50, "reset_at": reset_time}
-    }
-
-# 🎨 테마 스타일 정의
+# 🎨 테마 스타일 정의 (화이트 모드 Expander 밝은 회색 적용)
 THEME_STYLES = {
     "다크 모드": """
         <style>
         .stApp { background-color: #0E1117; color: #FAFAFA; }
-        .stApp * {
-            text-shadow: -1px -1px 0 #000, 1px -1px 0 #000, -1px 1px 0 #000, 1px 1px 0 #000 !important;
-        }
+        .stApp * { text-shadow: -1px -1px 0 #000, 1px -1px 0 #000, -1px 1px 0 #000, 1px 1px 0 #000 !important; }
         div[data-testid="stMetricValue"] { color: #FFFFFF !important; }
         </style>
     """,
     "화이트 모드": """
         <style>
-        .stApp { 
-            background-color: #FFFFFF !important; 
-        }
+        .stApp { background-color: #FFFFFF !important; }
         .stApp, .stApp p, .stApp span, .stApp label, .stApp h1, .stApp h2, .stApp h3, 
         .stApp div, div[data-testid="stMetricValue"], .stButton>button, .stButton>button p {
             color: #000000 !important;
@@ -85,234 +73,134 @@ THEME_STYLES = {
     "네온 시티": """
         <style>
         .stApp { background-color: #0d0221; color: #00f6ff !important; }
-        .stApp * {
-            text-shadow: -1px -1px 0 #000, 1px -1px 0 #000, -1px 1px 0 #000, 1px 1px 0 #000, 0 0 5px #00f6ff !important;
-        }
-        div[data-testid="stMetricValue"] { 
-            color: #ff007f !important; 
-            text-shadow: -1px -1px 0 #000, 1px -1px 0 #000, -1px 1px 0 #000, 1px 1px 0 #000, 0 0 12px #ff007f !important; 
-        }
+        .stApp * { text-shadow: -1px -1px 0 #000, 1px -1px 0 #000, -1px 1px 0 #000, 1px 1px 0 #000, 0 0 5px #00f6ff !important; }
+        div[data-testid="stMetricValue"] { color: #ff007f !important; text-shadow: -1px -1px 0 #000, 1px -1px 0 #000, -1px 1px 0 #000, 1px 1px 0 #000, 0 0 12px #ff007f !important; }
         .stButton>button { background-color: #241442 !important; color: #00f6ff !important; border: 1px solid #00f6ff !important; }
         </style>
     """,
     "골드 라운지": """
         <style>
         .stApp { background-color: #1a150e; color: #f3e5ab !important; }
-        .stApp * {
-            text-shadow: -1px -1px 0 #000, 1px -1px 0 #000, -1px 1px 0 #000, 1px 1px 0 #000 !important;
-        }
-        div[data-testid="stMetricValue"] { 
-            color: #ffd700 !important; 
-            text-shadow: -1px -1px 0 #000, 1px -1px 0 #000, -1px 1px 0 #000, 1px 1px 0 #000, 0 0 10px #ffd700 !important; 
-        }
+        .stApp * { text-shadow: -1px -1px 0 #000, 1px -1px 0 #000, -1px 1px 0 #000, 1px 1px 0 #000 !important; }
+        div[data-testid="stMetricValue"] { color: #ffd700 !important; text-shadow: -1px -1px 0 #000, 1px -1px 0 #000, -1px 1px 0 #000, 1px 1px 0 #000, 0 0 10px #ffd700 !important; }
         .stButton>button { background-color: #33291a !important; color: #ffd700 !important; border: 1px solid #ffd700 !important; }
         </style>
     """,
     "레트로 픽셀": """
         <style>
         .stApp { background-color: #001100; color: #00ff00 !important; font-family: monospace; }
-        .stApp * {
-            text-shadow: -1px -1px 0 #000, 1px -1px 0 #000, -1px 1px 0 #000, 1px 1px 0 #000, 0 0 4px #00ff00 !important;
-        }
-        div[data-testid="stMetricValue"] { 
-            color: #00ff00 !important; 
-            text-shadow: -1px -1px 0 #000, 1px -1px 0 #000, -1px 1px 0 #000, 1px 1px 0 #000, 0 0 8px #00ff00 !important; 
-        }
+        .stApp * { text-shadow: -1px -1px 0 #000, 1px -1px 0 #000, -1px 1px 0 #000, 1px 1px 0 #000, 0 0 4px #00ff00 !important; }
+        div[data-testid="stMetricValue"] { color: #00ff00 !important; text-shadow: -1px -1px 0 #000, 1px -1px 0 #000, -1px 1px 0 #000, 1px 1px 0 #000, 0 0 8px #00ff00 !important; }
         .stButton>button { background-color: #002200 !important; color: #00ff00 !important; border: 1px solid #00ff00 !important; }
         </style>
     """
 }
 
-# 2. 쿨타임 및 리셋 체크
-def check_and_reset_limits():
-    now = datetime.now()
-    for amount, config in st.session_state.gamble_limits.items():
-        if now >= config["reset_at"]:
-            config["remaining"] = LIMIT_CONFIG[amount]
-            config["reset_at"] = now + timedelta(hours=1)
+# 2. 게임 데이터를 JSON 형태 문자열로 묶기
+def get_save_payload():
+    return json.dumps({
+        "count": st.session_state.count,
+        "per_click": st.session_state.per_click,
+        "upgrade_count": st.session_state.upgrade_count,
+        "cost": st.session_state.cost,
+        "auto_clickers": st.session_state.auto_clickers,
+        "auto_cost": st.session_state.auto_cost,
+        "current_theme": st.session_state.current_theme,
+        "unlocked_themes": st.session_state.unlocked_themes
+    })
 
-check_and_reset_limits()
+# 3. 브라우저 저장/불러오기 자바스크립트 처리
+payload_str = get_save_payload()
 
-# 3. 로직 함수
-def increment(amount=None):
-    if amount is None:
-        st.session_state.count += st.session_state.per_click
-    else:
-        st.session_state.count += amount
-
-def toggle_shop():
-    st.session_state.show_shop = not st.session_state.show_shop
-    if st.session_state.show_shop:
-        st.session_state.show_casino = False
-        st.session_state.show_theme_tab = False
-
-def toggle_casino():
-    st.session_state.show_casino = not st.session_state.show_casino
-    if st.session_state.show_casino:
-        st.session_state.show_shop = False
-        st.session_state.show_theme_tab = False
-
-def toggle_theme_tab():
-    st.session_state.show_theme_tab = not st.session_state.show_theme_tab
-    if st.session_state.show_theme_tab:
-        st.session_state.show_shop = False
-        st.session_state.show_casino = False
-
-def buy_upgrade():
-    if st.session_state.count >= st.session_state.cost:
-        st.session_state.count -= st.session_state.cost
-        st.session_state.per_click += 1
-        st.session_state.upgrade_count += 1
-        
-        multipliers = [1.25, 1.5, 2.0]
-        weights = [50, 45, 5]
-        chosen_multiplier = random.choices(multipliers, weights=weights, k=1)[0]
-        
-        new_cost = round(st.session_state.cost * chosen_multiplier)
-        st.session_state.cost = int(new_cost)
-        
-        percent_str = f"{int((chosen_multiplier - 1) * 100)}%"
-        st.toast(f"🎉 클릭 강화 성공! (가격 +{percent_str} 인상)")
-    else:
-        st.toast("❌ 카운트가 부족합니다!")
-
-def buy_auto_clicker():
-    if st.session_state.count >= st.session_state.auto_cost:
-        st.session_state.count -= st.session_state.auto_cost
-        st.session_state.auto_clickers += 1
-        
-        multipliers = [3, 5, 10, 15]
-        weights = [10, 20, 50, 20]
-        chosen_multiplier = random.choices(multipliers, weights=weights, k=1)[0]
-        
-        st.session_state.auto_cost *= chosen_multiplier
-        st.toast(f"🤖 오토 클릭커 구매 성공! (다음 가격 {chosen_multiplier}배 상승: {st.session_state.auto_cost:,} 카운트)")
-    else:
-        st.toast("❌ 카운트가 부족합니다!")
-
-def draw_theme():
-    all_themes = ["다크 모드", "화이트 모드", "네온 시티", "골드 라운지", "레트로 픽셀"]
-    
-    if len(st.session_state.unlocked_themes) >= len(all_themes):
-        st.toast("🎉 이미 모든 테마를 해금하셨습니다!")
-        return
-
-    if st.session_state.count >= 500:
-        st.session_state.count -= 500
-        available_themes = [t for t in all_themes if t != st.session_state.current_theme]
-        chosen_theme = random.choice(available_themes)
-        
-        st.session_state.current_theme = chosen_theme
-        if chosen_theme not in st.session_state.unlocked_themes:
-            st.session_state.unlocked_themes.append(chosen_theme)
-            st.toast(f"🎨 신규 테마 해금! [{chosen_theme}] (으)로 변경 및 보관함에 추가되었습니다!", icon="✨")
-        else:
-            st.toast(f"🎨 테마 뽑기 성공! [{chosen_theme}] (으)로 변경되었습니다!", icon="✨")
-    else:
-        st.toast("❌ 카운트가 부족합니다! (필요: 500 카운트)")
-
-def gamble(amount):
-    check_and_reset_limits()
-    limit_info = st.session_state.gamble_limits[amount]
-    
-    if limit_info["remaining"] <= 0:
-        st.toast("❌ 이번 시간대의 배팅 횟수를 모두 소진했습니다!")
-        return
-        
-    if st.session_state.count >= amount:
-        st.session_state.count -= amount
-        limit_info["remaining"] -= 1
-        
-        multipliers = [0.5, 2, 5, 10]
-        weights = [60, 29, 10, 1]
-        
-        chosen_multiplier = random.choices(multipliers, weights=weights, k=1)[0]
-        winnings = int(amount * chosen_multiplier)
-        
-        st.session_state.count += winnings
-        
-        if chosen_multiplier >= 1:
-            st.toast(f"🎰 대박! {chosen_multiplier}배 당첨! (+{winnings:,} 획득)", icon="🎉")
-        else:
-            st.toast(f"💀 꽝! {chosen_multiplier}배... ({winnings:,}만 환급)", icon="😭")
-    else:
-        st.toast("❌ 배팅할 카운트가 부족합니다!")
-
-# 4. 키보드 이벤트 처리
-st.components.v1.html(
-    """
+components.html(
+    f"""
     <script>
     const parentDoc = window.parent.document;
-    const pressedKeys = new Set();
-    
-    function handleKeyDown(e) {
+
+    // 브라우저에 저장하기 함수
+    function saveGameData() {{
+        const payload = {json.dumps(payload_str)};
+        localStorage.setItem('space_counter_save_data', payload);
+        console.log("Game Data Saved:", payload);
+    }}
+
+    // 스페이스바 입력 처리
+    function handleKeyDown(e) {{
         if (['INPUT', 'TEXTAREA'].includes(parentDoc.activeElement.tagName)) return;
-        
-        pressedKeys.add(e.code);
-        
-        if (pressedKeys.has('KeyQ') && pressedKeys.has('KeyW') && pressedKeys.has('KeyE') && pressedKeys.has('KeyR')) {
-            e.preventDefault();
-            const cheatBtn = parentDoc.querySelector('button[key="cheat_btn"]');
-            if (cheatBtn) cheatBtn.click();
-            pressedKeys.clear();
-            return;
-        }
-
-        if (e.code === 'Space') {
+        if (e.code === 'Space') {{
             e.preventDefault();
             const btns = parentDoc.querySelectorAll('button');
-            for (let btn of btns) {
-                if (btn.innerText.includes('숫자 올리기')) {
-                    btn.click();
-                    break;
-                }
-            }
-        } else if (e.code === 'KeyE' && pressedKeys.size === 1) {
-            e.preventDefault();
-            const btns = parentDoc.querySelectorAll('button');
-            for (let btn of btns) {
-                if (btn.innerText.includes('상점')) {
-                    btn.click();
-                    break;
-                }
-            }
-        }
-    }
-
-    function handleKeyUp(e) {
-        pressedKeys.delete(e.code);
-    }
+            for (let btn of btns) {{
+                if (btn.innerText.includes('숫자 올리기')) {{ btn.click(); break; }}
+            }}
+        }}
+    }}
 
     parentDoc.removeEventListener('keydown', handleKeyDown);
-    parentDoc.removeEventListener('keyup', handleKeyUp);
     parentDoc.addEventListener('keydown', handleKeyDown);
-    parentDoc.addEventListener('keyup', handleKeyUp);
-    document.addEventListener('keydown', handleKeyDown);
-    document.addEventListener('keyup', handleKeyUp);
     </script>
     """,
     height=0,
 )
 
-st.button("Cheat", key="cheat_btn", on_click=lambda: increment(5000), type="secondary", use_container_width=False)
+# 25분 주기 자동 저장 체크
+def check_auto_save():
+    now = datetime.now()
+    if now - st.session_state.last_save_time >= timedelta(minutes=25):
+        st.session_state.last_save_time = now
+        st.toast("💾 25분이 경과되어 브라우저에 자동 저장되었습니다!")
 
-# 5. UI 구성 및 테마 CSS 적용
+# 로드 데이터 세션 반영 함수
+def load_saved_data(json_str):
+    try:
+        data = json.loads(json_str)
+        st.session_state.count = data.get("count", 0)
+        st.session_state.per_click = data.get("per_click", 1)
+        st.session_state.upgrade_count = data.get("upgrade_count", 0)
+        st.session_state.cost = data.get("cost", 50)
+        st.session_state.auto_clickers = data.get("auto_clickers", 0)
+        st.session_state.auto_cost = data.get("auto_cost", 5000)
+        st.session_state.current_theme = data.get("current_theme", "다크 모드")
+        st.session_state.unlocked_themes = data.get("unlocked_themes", ["다크 모드"])
+        st.toast("🎮 이전 저장 데이터를 성공적으로 불러왔습니다!")
+    except:
+        st.toast("❌ 저장 데이터 로드 실패")
+
+# UI 구성
 st.markdown(THEME_STYLES[st.session_state.current_theme], unsafe_allow_html=True)
-
 st.title("🔢 스페이스 카운터")
 
-st.markdown("""
-    <style>
-    button[key="cheat_btn"] {
-        display: none !important;
-    }
-    </style>
-""", unsafe_allow_html=True)
+# 데이터 불러오기/저장하기 수동 영역
+with st.sidebar:
+    st.header("💾 데이터 관리")
+    st.caption("25분마다 브라우저에 자동 저장됩니다.")
+    
+    # 수동 저장 기능
+    if st.button("💾 지금 브라우저에 저장", use_container_width=True):
+        components.html(
+            f"""
+            <script>
+            localStorage.setItem('space_counter_save_data', {json.dumps(payload_str)});
+            alert('브라우저에 저장되었습니다!');
+            </script>
+            """,
+            height=0,
+        )
+        st.toast("💾 데이터가 저장되었습니다!")
 
-# 6. 조건부 카운터 출력
+    # 이전 데이터 복원용 텍스트 입력창
+    st.write("---")
+    save_code_input = st.text_input("복원용 저장 데이터 입력", placeholder="저장된 JSON 코드를 붙여넣으세요")
+    if st.button("데이터 불러오기", use_container_width=True):
+        if save_code_input.strip():
+            load_saved_data(save_code_input.strip())
+            st.rerun()
+
+# 오토 카운터 Fragment
 @st.fragment(run_every=1)
 def render_auto_counter():
     st.session_state.count += st.session_state.auto_clickers
+    check_auto_save()
     st.metric("현재 카운트 (실시간)", f"{st.session_state.count:,}")
 
 if st.session_state.auto_clickers > 0:
@@ -320,133 +208,61 @@ if st.session_state.auto_clickers > 0:
 else:
     st.metric("현재 카운트", f"{st.session_state.count:,}")
 
-st.button(
-    f"숫자 올리기 (+{st.session_state.per_click:,}) (Space 키)", 
-    on_click=increment, 
-    use_container_width=True
-)
+def increment():
+    st.session_state.count += st.session_state.per_click
+    check_auto_save()
+
+st.button(f"숫자 올리기 (+{st.session_state.per_click:,}) (Space 키)", on_click=increment, use_container_width=True)
 
 st.write("---")
 
-col_btn1, col_btn2, col_btn3 = st.columns(3)
-with col_btn1:
-    st.button(
-        f"🏪 상점 {'닫기' if st.session_state.show_shop else '열기'} (E 키)", 
-        on_click=toggle_shop, 
-        type="primary" if st.session_state.show_shop else "secondary",
-        use_container_width=True
-    )
-with col_btn2:
-    st.button(
-        f"🎰 도박장 {'닫기' if st.session_state.show_casino else '열기'}", 
-        on_click=toggle_casino, 
-        type="primary" if st.session_state.show_casino else "secondary",
-        use_container_width=True
-    )
-with col_btn3:
-    st.button(
-        f"🎨 테마 {'닫기' if st.session_state.show_theme_tab else '목록'}", 
-        on_click=toggle_theme_tab, 
-        type="primary" if st.session_state.show_theme_tab else "secondary",
-        use_container_width=True
-    )
+# 탭 버튼
+c1, c2, c3 = st.columns(3)
+with c1:
+    if st.button("🏪 상점", use_container_width=True):
+        st.session_state.show_shop = not st.session_state.show_shop
+        st.session_state.show_casino = False
+        st.session_state.show_theme_tab = False
+with c2:
+    if st.button("🎰 도박장", use_container_width=True):
+        st.session_state.show_casino = not st.session_state.show_casino
+        st.session_state.show_shop = False
+        st.session_state.show_theme_tab = False
+with c3:
+    if st.button("🎨 테마", use_container_width=True):
+        st.session_state.show_theme_tab = not st.session_state.show_theme_tab
+        st.session_state.show_shop = False
+        st.session_state.show_casino = False
 
-# 7. 상점 UI
+# 🛒 상점 UI
 if st.session_state.show_shop:
     with st.expander("🛒 강화 상점", expanded=True):
-        st.markdown(f"**1. 클릭당 증가량 +1 강화** (구매 횟수: {st.session_state.upgrade_count}/5)")
-        st.write(f"- 필요 카운트: **{st.session_state.cost:,}**")
-        st.write(f"- 구매 후 증가 수치: **+{st.session_state.per_click + 1:,}**")
-        st.caption("🎲 구매 시 가격이 랜덤 비율(+25%/+50%/+100%)로 인상됩니다.")
-        
-        can_buy_upgrade = st.session_state.count >= st.session_state.cost
-        st.button(
-            "클릭 강화 구매하기", 
-            key="buy_upgrade_btn",
-            on_click=buy_upgrade, 
-            disabled=not can_buy_upgrade,
-            use_container_width=True
-        )
-        
-        st.write("---")
-        
-        st.markdown("**2. 🤖 오토 클릭커 (1초당 +1 자동 증가)**")
-        if st.session_state.upgrade_count >= 5:
-            st.write(f"- 필요 카운트: **{st.session_state.auto_cost:,}**")
-            st.write(f"- 현재 보유량: **{st.session_state.auto_clickers}개**")
-            st.caption("🎲 구매 시 다음 가격이 랜덤 배율(3배/5배/10배/15배)로 인상됩니다.")
-            
-            can_buy_auto = st.session_state.count >= st.session_state.auto_cost
-            st.button(
-                "오토 클릭커 구매하기", 
-                key="buy_auto_btn",
-                on_click=buy_auto_clicker, 
-                disabled=not can_buy_auto,
-                use_container_width=True
-            )
-        else:
-            st.warning(f"🔒 해금 조건: 클릭 강화를 5번 구매하세요! (현재 {st.session_state.upgrade_count}/5회)")
+        st.markdown(f"**1. 클릭 강화** (구매: {st.session_state.upgrade_count}/5)")
+        if st.button("클릭 강화 구매", use_container_width=True):
+            if st.session_state.count >= st.session_state.cost:
+                st.session_state.count -= st.session_state.cost
+                st.session_state.per_click += 1
+                st.session_state.upgrade_count += 1
+                st.session_state.cost = int(st.session_state.cost * 1.5)
+                st.toast("🎉 클릭 강화 성공!")
+            else:
+                st.toast("❌ 카운트 부족")
 
-        st.write("---")
-
-        st.markdown(f"**3. 🎨 테마 뽑기** (현재 적용: **{st.session_state.current_theme}**)")
-        st.write("- 필요 카운트: **500**")
-        st.caption("🎲 현재 테마를 제외한 나머지 4개 테마 중 하나가 25% 확률로 무작위 적용되며 보관함에 저장됩니다.")
-        
-        can_draw_theme = st.session_state.count >= 500
-        st.button(
-            "🎨 테마 랜덤 뽑기 (500 카운트)", 
-            key="draw_theme_btn",
-            on_click=draw_theme, 
-            disabled=not can_draw_theme,
-            use_container_width=True
-        )
-
-# 8. 도박장 UI
+# 🎰 도박장 UI
 if st.session_state.show_casino:
     with st.expander("🎰 행운의 도박장", expanded=True):
-        st.markdown("**배팅 금액 및 남아있는 횟수**")
-        st.caption("🎲 확률: 0.5배 (60%) | 2배 (29%) | 5배 (10%) | 10배 (1%) (1시간마다 횟수 리셋)")
-        
-        now = datetime.now()
-        c1, c2, c3 = st.columns(3)
-        
-        for idx, amount in enumerate([100, 1000, 10000]):
-            info = st.session_state.gamble_limits[amount]
-            rem = info["remaining"]
-            max_cnt = LIMIT_CONFIG[amount]
-            
-            time_left = info["reset_at"] - now
-            minutes_left = int(time_left.total_seconds() // 60)
-            
-            target_col = [c1, c2, c3][idx]
-            with target_col:
-                st.write(f"**{amount:,} 배팅**")
-                st.caption(f"남은 횟수: **{rem}/{max_cnt}**")
-                if rem == 0:
-                    st.caption(f"⏳ 리셋: {minutes_left}분 후")
-                
-                can_gamble = (st.session_state.count >= amount) and (rem > 0)
-                st.button(
-                    f"{amount:,} 배팅", 
-                    key=f"gamble_btn_{amount}",
-                    on_click=gamble, 
-                    args=(amount,),
-                    disabled=not can_gamble,
-                    use_container_width=True
-                )
+        if st.button("100 배팅", use_container_width=True):
+            if st.session_state.count >= 100:
+                st.session_state.count -= 100
+                mult = random.choice([0.5, 2, 5])
+                win = int(100 * mult)
+                st.session_state.count += win
+                st.toast(f"🎰 {mult}배 당첨! (+{win:,})")
 
-# 9. 🎨 테마 보관함 탭 UI
+# 🎨 테마 UI
 if st.session_state.show_theme_tab:
     with st.expander("🎨 보유한 테마 목록", expanded=True):
-        st.write("해금한 테마를 자유롭게 선택하여 변경할 수 있습니다.")
-        
-        selected_theme = st.radio(
-            "적용할 테마를 선택하세요:",
-            options=st.session_state.unlocked_themes,
-            index=st.session_state.unlocked_themes.index(st.session_state.current_theme)
-        )
-        
+        selected_theme = st.radio("테마 선택:", options=st.session_state.unlocked_themes, index=st.session_state.unlocked_themes.index(st.session_state.current_theme))
         if selected_theme != st.session_state.current_theme:
             st.session_state.current_theme = selected_theme
             st.rerun()
