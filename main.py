@@ -21,8 +21,12 @@ if "show_shop" not in st.session_state:
     st.session_state.show_shop = False
 if "show_casino" not in st.session_state:
     st.session_state.show_casino = False
+if "show_theme_tab" not in st.session_state:
+    st.session_state.show_theme_tab = False
 if "current_theme" not in st.session_state:
-    st.session_state.current_theme = "다크 모드" # 기본 테마
+    st.session_state.current_theme = "다크 모드"
+if "unlocked_themes" not in st.session_state:
+    st.session_state.unlocked_themes = ["다크 모드"] # 초기 보유 테마
 
 # 🎰 도박 횟수 및 쿨타임 초기화
 LIMIT_CONFIG = {
@@ -99,11 +103,19 @@ def toggle_shop():
     st.session_state.show_shop = not st.session_state.show_shop
     if st.session_state.show_shop:
         st.session_state.show_casino = False
+        st.session_state.show_theme_tab = False
 
 def toggle_casino():
     st.session_state.show_casino = not st.session_state.show_casino
     if st.session_state.show_casino:
         st.session_state.show_shop = False
+        st.session_state.show_theme_tab = False
+
+def toggle_theme_tab():
+    st.session_state.show_theme_tab = not st.session_state.show_theme_tab
+    if st.session_state.show_theme_tab:
+        st.session_state.show_shop = False
+        st.session_state.show_casino = False
 
 def buy_upgrade():
     if st.session_state.count >= st.session_state.cost:
@@ -139,17 +151,24 @@ def buy_auto_clicker():
 
 # 🎨 테마 뽑기 함수 (현재 테마 제외 나머지 4개 중 25% 확률 무작위)
 def draw_theme():
+    all_themes = ["다크 모드", "화이트 모드", "네온 시티", "골드 라운지", "레트로 픽셀"]
+    
+    # 올 해금 되었는지 확인
+    if len(st.session_state.unlocked_themes) >= len(all_themes):
+        st.toast("🎉 이미 모든 테마를 해금하셨습니다!")
+        return
+
     if st.session_state.count >= 500:
         st.session_state.count -= 500
-        all_themes = ["다크 모드", "화이트 모드", "네온 시티", "골드 라운지", "레트로 픽셀"]
-        
-        # 현재 적용 중인 테마 제외
         available_themes = [t for t in all_themes if t != st.session_state.current_theme]
-        
-        # 남은 4개 중에서 각 25% 확률로 1개 선택
         chosen_theme = random.choice(available_themes)
+        
         st.session_state.current_theme = chosen_theme
-        st.toast(f"🎨 테마 뽑기 성공! [{chosen_theme}] (으)로 변경되었습니다!", icon="✨")
+        if chosen_theme not in st.session_state.unlocked_themes:
+            st.session_state.unlocked_themes.append(chosen_theme)
+            st.toast(f"🎨 신규 테마 해금! [{chosen_theme}] (으)로 변경 및 보관함에 추가되었습니다!", icon="✨")
+        else:
+            st.toast(f"🎨 테마 뽑기 성공! [{chosen_theme}] (으)로 변경되었습니다!", icon="✨")
     else:
         st.toast("❌ 카운트가 부족합니다! (필요: 500 카운트)")
 
@@ -272,7 +291,7 @@ st.button(
 
 st.write("---")
 
-col_btn1, col_btn2 = st.columns(2)
+col_btn1, col_btn2, col_btn3 = st.columns(3)
 with col_btn1:
     st.button(
         f"🏪 상점 {'닫기' if st.session_state.show_shop else '열기'} (E 키)", 
@@ -285,6 +304,13 @@ with col_btn2:
         f"🎰 도박장 {'닫기' if st.session_state.show_casino else '열기'}", 
         on_click=toggle_casino, 
         type="primary" if st.session_state.show_casino else "secondary",
+        use_container_width=True
+    )
+with col_btn3:
+    st.button(
+        f"🎨 테마 {'닫기' if st.session_state.show_theme_tab else '목록'}", 
+        on_click=toggle_theme_tab, 
+        type="primary" if st.session_state.show_theme_tab else "secondary",
         use_container_width=True
     )
 
@@ -329,7 +355,7 @@ if st.session_state.show_shop:
         # 🎨 3. 테마 랜덤 뽑기
         st.markdown(f"**3. 🎨 테마 뽑기** (현재 적용: **{st.session_state.current_theme}**)")
         st.write("- 필요 카운트: **500**")
-        st.caption("🎲 현재 테마를 제외한 나머지 4개 테마 중 하나가 25% 확률로 무작위 적용됩니다.")
+        st.caption("🎲 현재 테마를 제외한 나머지 4개 테마 중 하나가 25% 확률로 무작위 적용되며 보관함에 저장됩니다.")
         
         can_draw_theme = st.session_state.count >= 500
         st.button(
@@ -373,3 +399,18 @@ if st.session_state.show_casino:
                     disabled=not can_gamble,
                     use_container_width=True
                 )
+
+# 9. 🎨 테마 보관함 탭 UI
+if st.session_state.show_theme_tab:
+    with st.expander("🎨 보유한 테마 목록", expanded=True):
+        st.write("해금한 테마를 자유롭게 선택하여 변경할 수 있습니다.")
+        
+        selected_theme = st.radio(
+            "적용할 테마를 선택하세요:",
+            options=st.session_state.unlocked_themes,
+            index=st.session_state.unlocked_themes.index(st.session_state.current_theme)
+        )
+        
+        if selected_theme != st.session_state.current_theme:
+            st.session_state.current_theme = selected_theme
+            st.rerun()
