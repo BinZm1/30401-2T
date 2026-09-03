@@ -71,12 +71,18 @@ def buy_upgrade():
         st.session_state.per_click += 1
         st.session_state.upgrade_count += 1
         
-        multipliers = [2, 3, 5, 10]
-        weights = [10, 60, 30, 10]
+        # [수정된 부분] 가격 인상 배율 및 확률 설정
+        # 25% 증가(1.25배): 10%, 50% 증가(1.5배): 50%, 100% 증가(2.0배): 30%, 150% 증가(2.5배): 10%
+        multipliers = [1.25, 1.5, 2.0, 2.5]
+        weights = [10, 50, 30, 10]
         chosen_multiplier = random.choices(multipliers, weights=weights, k=1)[0]
         
-        st.session_state.cost *= chosen_multiplier
-        st.toast(f"🎉 클릭 강화 성공! (다음 비용 {chosen_multiplier}배 상승)")
+        # 가격 계산 및 소수점 반올림 처리
+        new_cost = round(st.session_state.cost * chosen_multiplier)
+        st.session_state.cost = int(new_cost)
+        
+        percent_str = f"{int((chosen_multiplier - 1) * 100)}%"
+        st.toast(f"🎉 클릭 강화 성공! (가격 +{percent_str} 인상)")
     else:
         st.toast("❌ 카운트가 부족합니다!")
 
@@ -235,6 +241,7 @@ if st.session_state.show_shop:
         st.markdown(f"**1. 클릭당 증가량 +1 강화** (구매 횟수: {st.session_state.upgrade_count}/5)")
         st.write(f"- 필요 카운트: **{st.session_state.cost:,}**")
         st.write(f"- 구매 후 증가 수치: **+{st.session_state.per_click + 1:,}**")
+        st.caption("🎲 구매 시 가격이 랜덤 비율(+25%/+50%/+100%/+150%)로 인상됩니다.")
         
         can_buy_upgrade = st.session_state.count >= st.session_state.cost
         st.button(
