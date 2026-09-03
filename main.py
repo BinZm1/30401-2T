@@ -44,30 +44,42 @@ if "gamble_limits" not in st.session_state:
         10000: {"remaining": 50, "reset_at": reset_time}
     }
 
-# 🎨 테마 스타일 정의 (시인성 확보를 위한 글자 테두리 효과 강화)
+# 🎨 테마 스타일 정의 (모든 요소의 글자 색상 보정 및 테두리 효과 대폭 강화)
 THEME_STYLES = {
     "다크 모드": """
         <style>
         .stApp { background-color: #0E1117; color: #FAFAFA; }
-        div[data-testid="stMetricValue"] { 
-            color: #FFFFFF !important; 
-            text-shadow: -1px -1px 0 #000, 1px -1px 0 #000, -1px 1px 0 #000, 1px 1px 0 #000, 0 0 8px rgba(255,255,255,0.8) !important; 
+        .stApp * {
+            text-shadow: -1px -1px 0 #000, 1px -1px 0 #000, -1px 1px 0 #000, 1px 1px 0 #000 !important;
         }
+        div[data-testid="stMetricValue"] { color: #FFFFFF !important; }
         </style>
     """,
     "화이트 모드": """
         <style>
-        .stApp { background-color: #FFFFFF; color: #111111; }
-        div[data-testid="stMetricValue"] { 
-            color: #111111 !important; 
-            text-shadow: -1px -1px 0 #FFFFFF, 1px -1px 0 #FFFFFF, -1px 1px 0 #FFFFFF, 1px 1px 0 #FFFFFF, 0 0 5px rgba(0,0,0,0.2) !important; 
+        .stApp { background-color: #FFFFFF; color: #111111 !important; }
+        .stApp p, .stApp span, .stApp label, .stApp h1, .stApp h2, .stApp h3, .stApp div {
+            color: #111111 !important;
+            text-shadow: -1px -1px 0 #FFFFFF, 1px -1px 0 #FFFFFF, -1px 1px 0 #FFFFFF, 1px 1px 0 #FFFFFF, 0 0 3px rgba(0,0,0,0.3) !important;
+            -webkit-text-stroke: 0.3px #000000;
         }
-        .stButton>button { background-color: #F0F2F6 !important; color: #111111 !important; border: 1px solid #D1D5DB !important; }
+        div[data-testid="stMetricValue"] { color: #111111 !important; }
+        .stButton>button { 
+            background-color: #F0F2F6 !important; 
+            color: #111111 !important; 
+            border: 2px solid #111111 !important; 
+        }
+        .stButton>button p {
+            color: #111111 !important;
+        }
         </style>
     """,
     "네온 시티": """
         <style>
-        .stApp { background-color: #0d0221; color: #00f6ff; }
+        .stApp { background-color: #0d0221; color: #00f6ff !important; }
+        .stApp * {
+            text-shadow: -1px -1px 0 #000, 1px -1px 0 #000, -1px 1px 0 #000, 1px 1px 0 #000, 0 0 5px #00f6ff !important;
+        }
         div[data-testid="stMetricValue"] { 
             color: #ff007f !important; 
             text-shadow: -1px -1px 0 #000, 1px -1px 0 #000, -1px 1px 0 #000, 1px 1px 0 #000, 0 0 12px #ff007f !important; 
@@ -77,7 +89,10 @@ THEME_STYLES = {
     """,
     "골드 라운지": """
         <style>
-        .stApp { background-color: #1a150e; color: #f3e5ab; }
+        .stApp { background-color: #1a150e; color: #f3e5ab !important; }
+        .stApp * {
+            text-shadow: -1px -1px 0 #000, 1px -1px 0 #000, -1px 1px 0 #000, 1px 1px 0 #000 !important;
+        }
         div[data-testid="stMetricValue"] { 
             color: #ffd700 !important; 
             text-shadow: -1px -1px 0 #000, 1px -1px 0 #000, -1px 1px 0 #000, 1px 1px 0 #000, 0 0 10px #ffd700 !important; 
@@ -87,7 +102,10 @@ THEME_STYLES = {
     """,
     "레트로 픽셀": """
         <style>
-        .stApp { background-color: #001100; color: #00ff00; font-family: monospace; }
+        .stApp { background-color: #001100; color: #00ff00 !important; font-family: monospace; }
+        .stApp * {
+            text-shadow: -1px -1px 0 #000, 1px -1px 0 #000, -1px 1px 0 #000, 1px 1px 0 #000, 0 0 4px #00ff00 !important;
+        }
         div[data-testid="stMetricValue"] { 
             color: #00ff00 !important; 
             text-shadow: -1px -1px 0 #000, 1px -1px 0 #000, -1px 1px 0 #000, 1px 1px 0 #000, 0 0 8px #00ff00 !important; 
